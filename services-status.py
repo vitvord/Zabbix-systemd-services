@@ -53,6 +53,7 @@ def get_service_status(service_name: str):
 
     try:
         output = subprocess.check_output(['/usr/bin/systemctl', 'status', service_name],
+                                         errors='ignore', encoding='utf-8',
                                          universal_newlines=True, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
         # systemctl exit code > 0 if service is in running state. Skip this exceptions type for further actions.
