@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>5.0</version>
+    <date>2020-10-22T23:27:38Z</date>
+    <groups>
+        <group>
+            <name>Templates/Linux</name>
+        </group>
+    </groups>
+    <templates>
+        <template>
+            <template>service monitoring systemctl v2</template>
+            <name>service monitoring systemctl v2</name>
+            <groups>
+                <group>
+                    <name>Templates/Linux</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>systemctl condition</name>
+                </application>
+                <application>
+                    <name>systemctl contains condition</name>
+                </application>
+                <application>
+                    <name>systemctl raw</name>
+                </application>
+                <application>
+                    <name>systemctl startup</name>
+                </application>
+                <application>
+                    <name>systemctl status</name>
+                </application>
+            </applications>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>systemctl list-unit-files</name>
+                    <type>ZABBIX_ACTIVE</type>
+                    <key>services.systemctl</key>
+                    <delay>1h</delay>
+                    <filter>
+                        <conditions>
+                            <condition>
+                                <macro>{#STATUS}</macro>
+                                <value>(enabled|disabled)</value>
+                                <formulaid>A</formulaid>
+                            </condition>
+                        </conditions>
+                    </filter>
+                    <lifetime>0</lifetime>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>service status {#NAME}</name>
+                            <type>DEPENDENT</type>
+                            <key>serivce.status[{#NAME}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>systemctl status</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>systemctl.active</name>
+                            </valuemap>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.Status</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>systemctl.status[{#NAME}]</key>
+                            </master_item>
+                            <trigger_prototypes>
+                                <trigger_prototype>
+                                    <expression>{last({$SERVICE_STARTUP_WINDOW})}=3</expression>
+                                    <name>Service &quot;{#NAME}&quot; is not completely started in last {$SERVICE_STARTUP_WINDOW}</name>
+                                    <priority>WARNING</priority>
+                                    <description>Maybe the pid file do not match from config with the startup init file</description>
+                                </trigger_prototype>
+                                <trigger_prototype>
+                                    <expression>{last()}=4</expression>
+                                    <name>Service &quot;{#NAME}&quot; is not in healthy state</name>
+                                    <priority>HIGH</priority>
+                                </trigger_prototype>
+                            </trigger_prototypes>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>service contains condition {#NAME}</name>
+                            <type>DEPENDENT</type>
+                            <key>service.condition[{#NAME}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>systemctl contains condition</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>systemctl.condition</name>
+                            </valuemap>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.Condition</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>systemctl.status[{#NAME}]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>service startup {#NAME}</name>
+                            <type>DEPENDENT</type>
+                            <key>service.startup[{#NAME}]</key>
+                            <delay>0</delay>
+                            <applications>
+                                <application>
+                                    <name>systemctl startup</name>
+                                </application>
+                            </applications>
+                            <valuemap>
+                                <name>systemctl.loaded</name>
+                            </valuemap>
+                            <preprocessing>
+                                <step>
+                                    <type>JSONPATH</type>
+                                    <params>$.Startup</params>
+                                </step>
+                            </preprocessing>
+                            <master_item>
+                                <key>systemctl.status[{#NAME}]</key>
+                            </master_item>
+                        </item_prototype>
+                        <item_prototype>
+                            <name>get service status of &quot;{#NAME}&quot;</name>
+                            <key>systemctl.status[{#NAME}]</key>
+                            <delay>10m</delay>
+                            <history>0</history>
+                            <trends>0</trends>
+                            <value_type>TEXT</value_type>
+                            <applications>
+                                <application>
+                                    <name>systemctl raw</name>
+                                </application>
+                            </applications>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes>
+                        <trigger_prototype>
+                            <expression>{service monitoring systemctl v2:serivce.status[{#NAME}].last()}=0 and {service monitoring systemctl v2:service.startup[{#NAME}].last()}=1 and {service monitoring systemctl v2:service.condition[{#NAME}].last()}=0</expression>
+                            <name>Service &quot;{#NAME}&quot; is not running but configured at startup</name>
+                            <priority>AVERAGE</priority>
+                            <description>some services like:&#13;
+* rhel-autorelabel&#13;
+* rhel-autorelabel-mark&#13;
+* rhel-configure&#13;
+* rhel-loadmodules&#13;
+* systemd-readahead-collect&#13;
+contains a triggered start. A workaround has been made to detect if the service contains even an condition</description>
+                        </trigger_prototype>
+                        <trigger_prototype>
+                            <expression>{service monitoring systemctl v2:serivce.status[{#NAME}].last()}=1 and {service monitoring systemctl v2:service.startup[{#NAME}].last()}=0</expression>
+                            <name>Service &quot;{#NAME}&quot; is running but not enabled at startup</name>
+                            <priority>AVERAGE</priority>
+                        </trigger_prototype>
+                    </trigger_prototypes>
+                </discovery_rule>
+            </discovery_rules>
+            <macros>
+                <macro>
+                    <macro>{$SERVICE_STARTUP_WINDOW}</macro>
+                    <value>8m</value>
+                </macro>
+            </macros>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <name>systemctl.active</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>dead</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>running</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>exited</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>start</newvalue>
+                </mapping>
+                <mapping>
+                    <value>4</value>
+                    <newvalue>something wrong</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>systemctl.condition</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>no</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>yes</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+        <value_map>
+            <name>systemctl.loaded</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>disabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>enabled</newvalue>
+                </mapping>
+                <mapping>
+                    <value>2</value>
+                    <newvalue>static</newvalue>
+                </mapping>
+                <mapping>
+                    <value>3</value>
+                    <newvalue>indirect</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>
