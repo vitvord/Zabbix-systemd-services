@@ -12,6 +12,7 @@ Script ignore services without enabled/disabled state and not a .service name
 You can filter services list using the files (one service per line):
     DISCOVERY_WHITELIST - select ONLY services in this file
     DISCOVERY_BLACKLIST - exclude services from file
+    ! Only one file can be loaded. The whitelist file is loaded first.
 """
 
 import json
@@ -85,6 +86,11 @@ def get_all_services():
 
     if output:
         output = output.split('\n')
+    else:
+        print("Can't get services list")
+        sys.exit(1)
+
+    # Filter services. Work only one filter
     if os.path.isfile(DISCOVERY_WHITELIST):
         result = parse_services_includeonly(output)
     elif os.path.isfile(DISCOVERY_BLACKLIST):
