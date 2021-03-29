@@ -143,7 +143,7 @@ def main(service: str = None):
         get_all_services()
 
 
-def allow_service_name(srv_name):
+def allowed_service_name(srv_name: str) -> bool:
     if re.search(r'[\[\] \| &\(\);]', srv_name):
         return False
     return True
@@ -187,7 +187,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         # TODO: check service name
         service_name = sys.argv[1]
-    if not allow_service_name(service_name):
+    if not allowed_service_name(service_name):
         print("Not allowed service name")
         sys.exit()
     main(service_name)
