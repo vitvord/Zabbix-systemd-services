@@ -151,8 +151,20 @@ def allow_service_name(srv_name):
 
 if __name__ == '__main__':
     service_name = ''
-    if len(sys.argv) > 2 or len(sys.argv) == 2 and (sys.argv == '-h' or sys.argv == '--help'):
+    if len(sys.argv) >= 2 or sys.argv == '-h' or sys.argv == '--help':
         print("""
+        Script return Zabbix format JSON with systemd services list - if no args
+        {"data": [{"{#NAME}": "ethers.service", "{#STATUS}": "disabled"},....
+        and individual services status.
+        {"data": [{"Status": 0, "Startup": 0, "Condition": 0}]}
+
+        Script ignore services without enabled/disabled state and not a .service name
+
+        You can filter services list using the files (one service per line):
+        DISCOVERY_WHITELIST - select ONLY services in this file
+        DISCOVERY_BLACKLIST - exclude services from file
+        ! Only one file can be loaded. The whitelist file is loaded first.
+        
         Usage: services-status.py [SERVICE]
             without parameters return systemd services -  status JSON list
             with SERVICE - return a service status JSON string
